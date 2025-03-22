@@ -20,7 +20,7 @@ scene.background = new THREE.Color(0x000000); // 設定黑色背景
 //Create camera
 const camera = new THREE.PerspectiveCamera(120, window.innerWidth / window.innerHeight, 0.1, 2000);
 camera.position.y = 30;
-camera.position.z = 250;
+camera.position.z = 280;
 
 //Create renderer
 const renderer = new THREE.WebGLRenderer({ alpha:true, preserveDrawingBuffer: true });
@@ -155,7 +155,7 @@ const shareBTNMaterial = new THREE.MeshBasicMaterial({
 const shareBTNPlane = new THREE.Mesh(BTNGeomertry, shareBTNMaterial);
 
 shareBTNPlane.position.z += 500;
-shareBTNPlane.position.y -= 250;
+shareBTNPlane.position.y -= 220;
 shareBTNPlane.scale.x = 0;
 shareBTNPlane.scale.y = 0;
 
@@ -209,9 +209,26 @@ function animate() {
 }
 animate();
 
+function isMobileDevice() {
+    return /mobile|android|iphone/i.test(navigator.userAgent.toLowerCase());
+}
+
 //RWD
 function resizeRenderer() {
-    const height = window.innerHeight;
+    if (isMobileDevice()) {
+        document.querySelectorAll('*').forEach(element => {
+            element.style.width = '100vw';
+        });
+
+        const width = 390;
+        const height = 900;
+
+        renderer.setSize(width, height);
+        renderer.domElement.style.width = '${width}px';
+        renderer.domElement.style.height = '${height}px';
+        camera.aspect = width / height;
+    } else {
+        const height = window.innerHeight;
     const aspectRatio = 390 / 844; // 原始比例
 
     const width = height * aspectRatio; // 根據高度計算新寬度
@@ -221,6 +238,7 @@ function resizeRenderer() {
     renderer.domElement.style.height = `${height}px`;
 
     camera.aspect = width / height;
+    }
     camera.updateProjectionMatrix();
 }
 
@@ -235,7 +253,7 @@ const raycaster = new THREE.Raycaster();
 
 let clickedPlane = null;
 
-const scaleFactor = 1.3;
+const scaleFactor = 1.2;
 
 let isInteractionDisabled = false;
 
@@ -247,6 +265,10 @@ let riveInputScratchDone; //寫在const riveFront裡面
 
 //choose
 window.addEventListener('pointerup', (event) => {
+
+    if (isDragging) {
+        return;
+    }
 
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -290,6 +312,77 @@ window.addEventListener('pointerup', (event) => {
         hideOtherCards();
     }
 });
+
+//scroll
+
+let currentRotation = 0;
+let targetRotation = 0;
+let lastX = 0;
+let isDragging = false;
+let draggingLock = true;
+
+const dragThreshold = 15;
+const rotationSpeed = Math.PI*2 / totalCards; //card = 8
+
+window.addEventListener('pointerdown', (e) => {
+    lastX = e.clientX;
+    isDragging = false;
+    draggingLock = false;
+});
+
+window.addEventListener('pointermove', (e) => {
+
+    if (draggingLock) {
+        return;
+    }
+
+    if (isInteractionDisabled) {
+        return;
+    }
+
+    const deltaX = e.clientX - lastX;
+
+    if (Math.abs(deltaX) > dragThreshold) {
+        isDragging = true;
+        if (deltaX > 0) {
+            targetRotation -= rotationSpeed;
+        } else {
+            targetRotation += rotationSpeed;
+        }
+
+        gsap.to({ rotation: currentRotation }, {
+            rotation: targetRotation,
+            duration: 1,
+            ease: "power2.out",
+            onUpdate: function () {
+                currentRotation = this.targets()[0].rotation;
+                updateCardPositions();
+            }
+        });
+        
+        lastX = e.clientX;
+
+        scrollComplete();
+    }
+
+
+});
+
+function scrollComplete () {
+    draggingLock = true;
+}
+
+function updateCardPositions() {
+    for (let i = 0; i< cardGroups.length; i++) {
+        const angle = (i / totalCards) * Math.PI * 2 + currentRotation;
+
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+
+        const card = cardGroups[i];
+        card.position.set(x, 0, z);
+    }
+}
 
 //hide other card
 function hideOtherCards() {
@@ -362,7 +455,7 @@ window.addEventListener('pointermove', (event) => {
             riveInputScratchDone.fire();
 
             gsap.to(clickedPlane.position, {
-                y: clickedPlane.position.y + (560 * 0.1),
+                y: clickedPlane.position.y + 70,
                 duration: 1,
                 ease: "power2.out",
             }); //position up after scratch complete
@@ -418,64 +511,3 @@ window.addEventListener('click', async (event) => {
         }
     }    
 });
-
-
-
-
-//scroll
-
-let currentRotation = 0;
-let targetRotation = 0;
-let lastX = 0;
-let isDragging = false;
-
-const dragThreshold = 15;
-const rotationSpeed = Math.PI*2 / totalCards; //card = 8
-
-window.addEventListener('pointerdown', (e) => {
-    lastX = e.clientX;
-    isDragging = false;
-});
-
-window.addEventListener('pointermove', (e) => {
-
-    if (isInteractionDisabled) {
-        return;
-    }
-
-    const deltaX = e.clientX - lastX;
-
-    if (Math.abs(deltaX) > dragThreshold) {
-        isDragging = true;
-        if (deltaX > 0) {
-            targetRotation -= rotationSpeed;
-        } else {
-            targetRotation += rotationSpeed;
-        }
-
-        gsap.to({ rotation: currentRotation }, {
-            rotation: targetRotation,
-            duration: 1,
-            ease: "power2.out",
-            onUpdate: function () {
-                currentRotation = this.targets()[0].rotation;
-                updateCardPositions();
-            }
-        });
-        
-        lastX = e.clientX;
-    }
-
-});
-
-function updateCardPositions() {
-    for (let i = 0; i< cardGroups.length; i++) {
-        const angle = (i / totalCards) * Math.PI * 2 + currentRotation;
-
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-
-        const card = cardGroups[i];
-        card.position.set(x, 0, z);
-    }
-}
