@@ -30,7 +30,7 @@ body{
     border-radius: 50%;
     display: inline-block;
     box-sizing: border-box;
-    animation: animloader 3s linear infinite;
+    animation: animloader 2s linear infinite;
     will-change: box-shadow;
   }
   
