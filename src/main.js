@@ -150,7 +150,7 @@ const frontMaterial = new THREE.MeshBasicMaterial({
 const frontPlane = new THREE.Mesh(planeGeometry, frontMaterial);
 
 frontPlane.rotation.y = Math.PI; //fix rot
-frontPlane.position.z -= 1; //fix position
+frontPlane.position.z -= 2; //fix position
 
 //Scratch plane
 const scratchTexture = new THREE.CanvasTexture(scratch);
@@ -164,7 +164,7 @@ const scratchMaterial = new THREE.MeshBasicMaterial({
 const scratchPlane = new THREE.Mesh(squareGeometry, scratchMaterial);
 
 scratchPlane.rotation.y = Math.PI; //fix rot
-scratchPlane.position.z -= 2; //fix position
+scratchPlane.position.z -= 3; //fix position
 
 //share BTN plane
 const shareBTNTexture = new THREE.CanvasTexture(shareBTN);
